@@ -25,7 +25,7 @@
 	async function fetchData() {
 		try {
 			state.loading = true;
-			const response = await axios.get("/person");
+			const response = await axios.get("/person/GetAll", { setTimeout: 300000 });
 			state.persons = response.data;
 			state.persons.sort((a, b) => a.businessEntityID - b.businessEntityID);
 		} catch (error) {
@@ -36,18 +36,19 @@
 	}
 
 	async function searchByNameAndType(name, type) {
-		try {
-			state.loading = true;
-			const response = await axios.get(
-				`/person/GetByNameAndType?name=${name}&emplType=${type}`
-			);
-			state.persons = response.data;
-		} catch (error) {
-			console.error(error);
-		} finally {
-			state.loading = false;
-		}
-	}
+    try {
+        state.loading = true;
+        const response = await axios.get(
+            `/person/GetByNameAndType?name=${name}&emplType=${type}`
+        );
+        state.persons = response.data;
+    } catch (error) {
+        console.error(error);
+    } finally {
+        state.loading = false;
+    }
+}
+
 
 	onMounted(async () => {
 		await fetchData();

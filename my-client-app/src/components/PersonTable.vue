@@ -13,9 +13,9 @@
 			<tr v-for="person in paginatedPersons" :key="person.id">
 				<td>{{ person.businessEntityID }}</td>
 				<td>{{ person.firstName }} {{ person.lastName }}</td>
-				<td>{{ person.jobTitle }}</td>
-				<td>{{ person.phoneNumber }}</td>
-				<td>{{ person.emailAddress }}</td>
+				<td>{{ person.employee ? person.employee.jobTitle : 'No job title' }}</td>
+				<td>{{ person.personPhone ? person.personPhone.phoneNumber : 'No phone number' }}</td>
+				<td>{{ person.emailAddress.emailAddress }}</td>
 			</tr>
 		</tbody>
 		<tfoot>

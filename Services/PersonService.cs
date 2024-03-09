@@ -1,86 +1,84 @@
-
 using System.Data;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-public class PersonService
+public class PersonService : IPersonRepository
 {
-    private DataClient _connection;
-    public PersonService(DataClient connection){
-        _connection = connection;
-    }
-    public List<PersonModel>? GetAll(){
-        try{
-            var result = _connection.GetResultsFromQuery<PersonModel>("SELECT * FROM [HumanResources].[vEmployee]", Map);           
-            return result;
-        }catch (Exception ex){
-            Console.WriteLine($"JustError: {ex.Message}");
-        }
-        return null;
+    private readonly Context _context;
+    public PersonService(Context context)
+    {
+        _context = context;
     }
 
-    public List<PersonModel>? GetPersonByName(string name){
-        try{
-            var result = _connection.GetResultsFromQuery<PersonModel>(
-                "SELECT * " +
-                "FROM [AdventureWorks2022].[HumanResources].[vEmployee] " +
-                $"WHERE CONCAT(FirstName,' ',MiddleName,' ',LastName) LIKE '%{name}%'", Map);
-            return result;
-        }catch (Exception ex){
-            Console.WriteLine($"JustError: {ex.Message}");
-        }
-        return null;
+    public async Task<IEnumerable<Person>> GetAll()
+    {
+        var response = await _context.PersonPerson
+            .Include( x => x.Employee)
+            .Include( x => x.Address)
+            .Include( x => x.EmailAddress)
+            .Include( x => x.PersonPhone)
+            .ToListAsync();
+        return response;
     }
 
-    public List<PersonModel>? GetPersonByPersonType(string personType){
-        try{
-            var result = _connection.GetResultsFromQuery<PersonModel>(
-                "SELECT A.* " +
-                "FROM [AdventureWorks2022].[HumanResources].[vEmployee] A " +
-                "INNER JOIN Person.Person B ON a.BusinessEntityID = b.BusinessEntityID " +
-                $"WHERE B.PersonType = '{personType}'", Map);
-            return result;
-        }catch (Exception ex){
+    public async Task<Person> GetPersonByName(string name)
+    {
+        if(name != null)
+        {
+            var response = await _context.PersonPerson
+                .Include(x => x.Employee)
+                .Include( x => x.Address)
+                .Include( x => x.EmailAddress)
+                .Include( x => x.PersonPhone)
+                .Where(x => x.FirstName == name)
+                .FirstOrDefaultAsync();
+
+            return response;
+        }else
+        {
+            return null;
+        }
+    }
+
+    public async Task<IEnumerable<Person>> GetPersonByNameAndPersonType(string name, string personType)
+    {
+        try
+        {
+            var response = await _context.PersonPerson
+                .Include(e => e.Address)
+                .Include(e => e.EmailAddress)
+                .Include(e => e.Employee)
+                .Include(e => e.PersonPhone)
+                .Where(e => e.PersonType == personType && e.FirstName == name)
+                .ToListAsync();
+            
+            return response;
+        }
+        catch (Exception ex)
+        {
             Console.WriteLine($"Error message: {ex.Message}");
+            return null;
         }
-        return null;
     }
 
-    public List<PersonModel>? GetPersonByNameAndPersonType(string name, string personType){
-        try{
-            var result = _connection.GetResultsFromQuery<PersonModel>(
-                "SELECT * " +
-                $"FROM [AdventureWorks2022].[HumanResources].[vEmployee] A " +
-                $"INNER JOIN Person.Person B ON A.BusinessEntityID = B.BusinessEntityID " +
-                $"WHERE " +
-                $"    ('{name}' ='' OR '{name}' IS NULL OR CONCAT(A.FirstName, ' ', A.MiddleName, ' ', A.LastName) LIKE '%{name}%') " +
-                $"    AND " +
-                $"    ('{personType}' = '' OR '{personType}' IS NULL OR B.PersonType = '{personType}')", Map);
-            return result;
-        }catch (Exception ex){
-            Console.WriteLine($"JustError: {ex.Message}");
+    public async Task<IEnumerable<Person>> GetPersonByPersonType(string personType)
+    {
+        try
+        {
+            var response = await _context.PersonPerson
+                .Include(e => e.Address)
+                .Include(e => e.EmailAddress)
+                .Include(e => e.Employee)
+                .Include(e => e.PersonPhone)
+                .Where(e => e.PersonType == personType)
+                .ToListAsync();
+            
+            return response;
         }
-        return null;
-    }
-    public PersonModel Map(IDataRecord record){
-        PersonModel person = new PersonModel();
-            person.BusinessEntityID = (int)record["BusinessEntityID"];
-            person.Title = record["Title"] as string;
-            person.FirstName = record["FirstName"] as string;
-            person.MiddleName = record["MiddleName"] as string;
-            person.LastName = record["LastName"] as string;
-            person.Suffix = record["Suffix"] as string;
-            person.JobTitle = record["JobTitle"] as string;
-            person.PhoneNumber = record["PhoneNumber"] as string;
-            person.PhoneNumberType = record["PhoneNumberType"] as string;
-            person.EmailAddress = record["EmailAddress"] as string;
-            person.EmailPromotion = (int)record["EmailPromotion"];
-            person.AddressLine1 = record["AddressLine1"] as string;
-            person.AddressLine1 = record["AddressLine1"] as string;
-            person.City = record["City"] as string;
-            person.StateProvinceName = record["StateProvinceName"] as string;
-            person.PostalCode = record["PostalCode"] as string;
-            person.CountryRegionName = record["CountryRegionName"] as string;
-            person.AdditionalContactInfo = record["AdditionalContactInfo"] as string;
-            return person;
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error message: {ex.Message}");
+            return null;
+        }
     }
 }
+
